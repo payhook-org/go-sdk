@@ -1,4 +1,4 @@
-# Payhook SDK GO
+# Payhook SDK GO [![GoDoc](http://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/payhook-org/go-sdk)
 
 go-sdk is an implementation of the Payhook API in Golang.
 
