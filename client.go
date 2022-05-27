@@ -7,12 +7,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 )
 
 const (
 	// ApiURL is the payhook api endpoint
-	ApiURL = "https://api-dev.payhook.org"
+	ApiURL = "https://api.payhook.org"
 	// ApiVersion is the payhook api version
 	ApiVersion = "v1"
 	// ApiUserAgent identifies this library
@@ -62,7 +61,7 @@ func (api *API) CreatePayment(params CreatePaymentParams) (*Payment, error) {
 		return nil, err
 	}
 
-	resp, err := api.makeRequest("createPayment", jsonBody, nil, &Payment{})
+	resp, err := api.makeRequest("createPayment", jsonBody, &Payment{})
 	if err != nil {
 		return nil, err
 	}
@@ -72,11 +71,18 @@ func (api *API) CreatePayment(params CreatePaymentParams) (*Payment, error) {
 
 // GetPayment get payment where paymentID
 func (api *API) GetPayment(paymentID uint64) (*Payment, error) {
-	urlValues := map[string]string{
-		"id": strconv.FormatUint(paymentID, 10),
+	request := struct {
+		ID uint64 `json:"id"`
+	}{
+		ID: paymentID,
 	}
 
-	resp, err := api.makeRequest("getPayment", nil, urlValues, &Payment{})
+	jsonBody, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := api.makeRequest("getPayment", jsonBody, &Payment{})
 	if err != nil {
 		return nil, err
 	}
@@ -86,12 +92,19 @@ func (api *API) GetPayment(paymentID uint64) (*Payment, error) {
 
 // DeletePayment delete payment from payhook where paymentID
 func (api *API) DeletePayment(paymentID uint64) (*bool, error) {
-	urlValues := map[string]string{
-		"id": strconv.FormatUint(paymentID, 10),
+	request := struct {
+		ID uint64 `json:"id"`
+	}{
+		ID: paymentID,
+	}
+
+	jsonBody, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
 	}
 
 	var deleted bool
-	resp, err := api.makeRequest("deletePayment", nil, urlValues, &deleted)
+	resp, err := api.makeRequest("deletePayment", jsonBody, &deleted)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +116,6 @@ func (api *API) DeletePayment(paymentID uint64) (*bool, error) {
 func (api *API) makeRequest(
 	method string,
 	body []byte,
-	urlValues map[string]string,
 	typ interface{},
 ) (interface{}, error) {
 	reqURL := fmt.Sprintf("%s/%s/invoke/%s", ApiURL, ApiVersion, method)
@@ -114,23 +126,19 @@ func (api *API) makeRequest(
 		"Content-Type":      "application/json",
 	}
 
-	return api.request(reqURL, headers, urlValues, body, typ)
+	return api.request(reqURL, headers, body, typ)
 }
 
 // request executes HTTP Request to the payhook and returns the result
 func (api *API) request(
 	reqURL string,
-	headers, urlValues map[string]string,
+	headers map[string]string,
 	body []byte,
 	typ interface{},
 ) (interface{}, error) {
 	req, err := http.NewRequest(http.MethodPost, reqURL, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
-	}
-
-	for key, value := range urlValues {
-		req.URL.Query().Add(key, value)
 	}
 
 	req.Header.Add("User-Agent", ApiUserAgent)
