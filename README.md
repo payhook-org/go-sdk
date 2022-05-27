@@ -43,7 +43,7 @@ func main() {
 ~~~
 
 ## Examples
-[Create With Webhook Example](https://github.com/payhook-org/go-sdk/examples)
+[Create With Webhook Example](https://github.com/payhook-org/go-sdk/blob/main/examples/main.go)
 
 ## Documentation
 [Payhook Documentaion](https://docs.payhook.org)
